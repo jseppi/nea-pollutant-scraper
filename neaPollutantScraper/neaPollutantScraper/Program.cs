@@ -39,12 +39,12 @@ namespace neaPollutantScraper
 
             public void OnCompleted()
             {
-                
+
             }
 
             public void OnError(Exception error)
             {
-                
+
             }
 
             public void OnNext(HtmlDoc value)
@@ -99,12 +99,28 @@ namespace neaPollutantScraper
 
                     //skip the first, it is the direction label
 
-                    //TODO: the 11am and 11pm values can be in a <strong> tag - account for this
-                    var values = tds.Skip(1).Select(x => x.InnerText.ToString().Trim());
-                    Console.WriteLine(string.Join(", ", values));
+                    //TODO: the most recent value is surrounded by <strong>
+                    Console.WriteLine(tds.Length);
+                    var values = tds.Skip(1).Select(x => GetValue(x).ToString().Trim()).ToList();
+                    //Console.WriteLine(string.Join(", ", values));
 
                     Console.WriteLine();
                 }
+            }
+
+
+            public double GetValue(IDomObject node)
+            {
+                if (node.InnerText.ToString().Trim() != "")
+                {
+                    Console.WriteLine(node.InnerText.ToString().Trim());
+                }
+                else
+                {
+                    Console.WriteLine("wrapped in <strong>");
+                }
+
+                return 0;
             }
         }
     }
