@@ -7,6 +7,7 @@ using System.Text;
 using SkyScraper.Observers.ConsoleWriter;
 using System.Threading.Tasks;
 using CsQuery;
+using System.Text.RegularExpressions;
 
 namespace neaPollutantScraper
 {
@@ -54,15 +55,9 @@ namespace neaPollutantScraper
         public class PollutantTableObserver : IObserver<HtmlDoc>
         {
 
-            public void OnCompleted()
-            {
+            public void OnCompleted() { }
 
-            }
-
-            public void OnError(Exception error)
-            {
-
-            }
+            public void OnError(Exception error) { }
 
             public void OnNext(HtmlDoc value)
             {
@@ -79,33 +74,7 @@ namespace neaPollutantScraper
                 string region = null;
                 for (int i = 0; i < rows.Length; i++)
                 {
-                    switch (i)
-                    {
-                        case 1:
-                        case 7:
-                            region = "North";
-                            break;
-                        case 2:
-                        case 8:
-                            region = "South";
-                            break;
-                        case 3:
-                        case 9:
-                            region = "East";
-                            break;
-                        case 4:
-                        case 10:
-                            region = "West";
-                            break;
-                        case 5:
-                        case 11:
-                            region = "Central";
-                            break;
-                        default:
-                            region = null;
-                            break;
-                    }
-
+                    region = getRegionFromIndex(i);
                     if (region == null) { continue; }
 
                     var row = rows[i];
@@ -115,45 +84,83 @@ namespace neaPollutantScraper
                     var tds = new CQ(row.InnerHTML)["td"];
 
                     //skip the first, it is the direction label
-
-                    //TODO: the most recent value is surrounded by <strong>
-                    Console.WriteLine(tds.Length);
                     var values = tds.Skip(1).Select(x => {
                         var v = GetValue(x);
-                        if (v != null) { return v.Value.ToString(); }
-                        return (-1).ToString();
+                        if (v != null) { return v.Value; }
+                        return (-1);
                     }).ToList();
                     Console.WriteLine(string.Join(", ", values));
-
-                    Console.WriteLine();
                 }
             }
 
-
-            public ValueHolder GetValue(IDomObject node)
+            private ValueHolder GetValue(IDomObject node)
             {
+                CQ strong = new CQ(node.InnerHTML)["strong"];
+
+                if (strong.Length > 0)
+                {
+                    node = strong[0];
+                }
+
                 var trimmedInner = node.InnerText.ToString().Trim();
+                Regex r = new Regex(@"(?<val>\d+)(\((?<sub>\d+)\))?");
 
-                if (trimmedInner != "")
+                if (trimmedInner.Equals("-"))
                 {
-                    //TODO: Most value strings actually look like ##(##)
-                    // where the number in parentheses is another value that should be recorded
-                    //TODO: Parse out and fill in second argument of ValueHolder
-                    double val;
-                    if (double.TryParse(trimmedInner, out val))
+                    return null;
+                }
+
+                var match = r.Match(trimmedInner);
+                if (match.Success)
+                {
+                    double val = Convert.ToDouble(match.Groups["val"].Value);
+
+                    if (match.Groups["sub"].Success)
                     {
-                        return new ValueHolder(val, null);
+                        double sub = Convert.ToDouble(match.Groups["sub"].Value);
+                        return new ValueHolder(val, sub);
                     }
+                        
+                    return new ValueHolder(val);
                 }
-                else
-                {
-                    Console.Write("wrapped in <strong>: ");
-                    CQ cq = node.InnerHTML;
-                    Console.Write(cq["strong"][0].InnerText.ToString().Trim() + "\n");
-                }
-
+                
                 return null;
             }
+
+
+            private string getRegionFromIndex(int i)
+            {
+                string region = null;
+                switch (i)
+                {
+                    case 1:
+                    case 7:
+                        region = "North";
+                        break;
+                    case 2:
+                    case 8:
+                        region = "South";
+                        break;
+                    case 3:
+                    case 9:
+                        region = "East";
+                        break;
+                    case 4:
+                    case 10:
+                        region = "West";
+                        break;
+                    case 5:
+                    case 11:
+                        region = "Central";
+                        break;
+                    default:
+                        region = null;
+                        break;
+                }
+
+                return region;
+            }
+
         }
     }
 }
