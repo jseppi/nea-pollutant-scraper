@@ -31,7 +31,24 @@ namespace neaPollutantScraper
                 scraper.Scrape(new Uri(url)).Wait();
             }
 
-       
+
+        }
+
+        public class ValueHolder
+        {
+            public double Value;
+            public double? SubIndex;
+
+            public ValueHolder(double value, double? subIndex)
+            {
+                Value = value;
+                SubIndex = subIndex;
+            }
+
+            public ValueHolder(double value)
+            {
+                Value = value;
+            }
         }
 
         public class PollutantTableObserver : IObserver<HtmlDoc>
@@ -101,26 +118,41 @@ namespace neaPollutantScraper
 
                     //TODO: the most recent value is surrounded by <strong>
                     Console.WriteLine(tds.Length);
-                    var values = tds.Skip(1).Select(x => GetValue(x).ToString().Trim()).ToList();
-                    //Console.WriteLine(string.Join(", ", values));
+                    var values = tds.Skip(1).Select(x => {
+                        var v = GetValue(x);
+                        if (v != null) { return v.Value.ToString(); }
+                        return (-1).ToString();
+                    }).ToList();
+                    Console.WriteLine(string.Join(", ", values));
 
                     Console.WriteLine();
                 }
             }
 
 
-            public double GetValue(IDomObject node)
+            public ValueHolder GetValue(IDomObject node)
             {
-                if (node.InnerText.ToString().Trim() != "")
+                var trimmedInner = node.InnerText.ToString().Trim();
+
+                if (trimmedInner != "")
                 {
-                    Console.WriteLine(node.InnerText.ToString().Trim());
+                    //TODO: Most value strings actually look like ##(##)
+                    // where the number in parentheses is another value that should be recorded
+                    //TODO: Parse out and fill in second argument of ValueHolder
+                    double val;
+                    if (double.TryParse(trimmedInner, out val))
+                    {
+                        return new ValueHolder(val, null);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("wrapped in <strong>");
+                    Console.Write("wrapped in <strong>: ");
+                    CQ cq = node.InnerHTML;
+                    Console.Write(cq["strong"][0].InnerText.ToString().Trim() + "\n");
                 }
 
-                return 0;
+                return null;
             }
         }
     }
