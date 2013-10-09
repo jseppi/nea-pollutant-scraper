@@ -111,8 +111,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\Pollutant.cs" />
+    <Compile Include="Models\Record.cs" />
+    <Compile Include="Models\Region.cs" />
+    <Compile Include="PollutantTableObserver.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ValueHolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
