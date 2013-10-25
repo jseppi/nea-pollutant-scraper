@@ -60,10 +60,9 @@ namespace neaPollutantScraper
 
                 var tds = new CQ(row.InnerHTML)["td"];
 
-                //Skip(1) because the first one is the region label
-
                 var currHour = isPm ? 12 : 0;
-
+                
+                //Skip(1) because the first one is the region label
                 foreach (var td in tds.Skip(1))
                 {
                     ValueHolder v = GetValue(td);
@@ -71,7 +70,6 @@ namespace neaPollutantScraper
                     double subIndex = -1;
                     if (v != null)
                     {
-                        //This is the issue -- GetValue is null
                         value = v.Value;
                         if (v.SubIndex.HasValue)
                         {
@@ -82,7 +80,7 @@ namespace neaPollutantScraper
                     var currReadingTime = new DateTime(today.Year, today.Month, today.Day,
                         currHour, 0, 1);
 
-                    currHour++; //increment the time
+                    currHour++; //increment the hour
 
                     Record rec = new Record
                     {
